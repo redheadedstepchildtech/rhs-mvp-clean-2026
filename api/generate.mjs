@@ -3,7 +3,15 @@ import path from 'path';
 
 export default async function handler(req, res) {
   try {
-    const { title, description, color } = req.body;
+    // Parse JSON body manually (required on Vercel)
+    const body = await new Promise((resolve, reject) => {
+      let data = '';
+      req.on('data', chunk => data += chunk);
+      req.on('end', () => resolve(JSON.parse(data)));
+      req.on('error', reject);
+    });
+
+    const { title, description, color } = body;
 
     // Load template
     const templatePath = path.join(process.cwd(), 'templates', 'minisite.html');
