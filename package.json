@@ -10,6 +10,7 @@
   "dependencies": {
     "html2canvas": "^1.4.1",
     "next": "latest",
+    "openai": "^6.27.0",
     "qrcode": "^1.5.4",
     "react": "latest",
     "react-dom": "latest"
