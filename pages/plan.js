@@ -18,7 +18,8 @@ export default function Plan() {
   }
 
   async function improveStory() {
-    if (!form.story.trim()) return;
+    // SAFETY FIX — prevents "Cannot read properties of undefined (reading 'trim')"
+    if (!form.story || !form.story.trim()) return;
 
     const res = await fetch("/api/rewrite", {
       method: "POST",
@@ -73,7 +74,6 @@ export default function Plan() {
           onChange={(e) => update("name", e.target.value)}
         />
 
-        {/* NEED DROPDOWN */}
         <select
           style={styles.input}
           value={form.need}
@@ -90,7 +90,6 @@ export default function Plan() {
           <option value="Other">Other (type below)</option>
         </select>
 
-        {/* FULL DONATION METHOD LIST */}
         <select
           style={styles.input}
           value={form.method}
