@@ -19,7 +19,9 @@ export async function POST(req) {
       input: `Rewrite the following story to be clearer, smoother, and more engaging, but keep the meaning the same:\n\n${story}`,
     });
 
-    const improved = response.output_text;
+    // NEW: Correct extraction for the Responses API
+    const improved =
+      response.output?.[0]?.content?.[0]?.text || "Rewrite failed.";
 
     return new Response(JSON.stringify({ improved }), {
       status: 200,
