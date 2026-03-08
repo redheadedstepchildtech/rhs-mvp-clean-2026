@@ -20,7 +20,7 @@ export default function Plan() {
   async function improveStory() {
     if (!form.story.trim()) return;
 
-    const res = await fetch("/api/improve", {
+    const res = await fetch("/api/rewrite", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ story: form.story }),
