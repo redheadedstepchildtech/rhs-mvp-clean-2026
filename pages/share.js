@@ -1,151 +1,97 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import QRCode from "qrcode";
-import html2canvas from "html2canvas";
 
 export default function Share() {
-  const [shareLink, setShareLink] = useState("");
-  const [qrImage, setQrImage] = useState("");
-  const [photo, setPhoto] = useState(null);
-
-  const cardRef = useRef(null);
+  const [data, setData] = useState(null);
+  const [qr, setQr] = useState("");
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const link = window.location.href.replace("/share", "/summary");
-      setShareLink(link);
+    const params = new URLSearchParams(window.location.search);
 
-      const storedPhoto = sessionStorage.getItem("uploadedPhoto");
-      if (storedPhoto) setPhoto(storedPhoto);
+    const hasPhoto = params.get("photo") === "yes";
+    const storedPhoto = hasPhoto ? sessionStorage.getItem("uploadedPhoto") : null;
 
-      QRCode.toDataURL(link, { width: 300 }, (err, url) => {
-        if (!err) setQrImage(url);
-      });
-    }
+    const info = {
+      name: params.get("name") || "",
+      need: params.get("need") || "",
+      method: params.get("method") || "",
+      link: params.get("link") || "",
+      story: params.get("story") || "",
+      photo: storedPhoto,
+    };
+
+    setData(info);
+
+    // Build the public donation page link
+    const shareLink = window.location.origin + "/summary?" + params.toString();
+
+    // Generate QR code
+    QRCode.toDataURL(shareLink).then((url) => setQr(url));
   }, []);
 
-  async function downloadCard() {
-    if (!cardRef.current) return;
+  if (!data) return <p>Loading...</p>;
 
-    const canvas = await html2canvas(cardRef.current, {
-      scale: 2,
-      useCORS: true,
-    });
+  const shareLink =
+    window.location.origin + "/summary?" + window.location.search.substring(1);
 
-    const dataURL = canvas.toDataURL("image/png");
-    const link = document.createElement("a");
-    link.href = dataURL;
-    link.download = "donation-card.png";
-    link.click();
+  function copyLink() {
+    navigator.clipboard.writeText(shareLink);
+    alert("Link copied!");
   }
 
-  if (!shareLink) return <p>Loading...</p>;
-
   return (
-    <div style={styles.page}>
+    <div style={styles.container}>
+      <h1 style={styles.title}>Share Your Donation Page</h1>
+
+      {qr && (
+        <img
+          src={qr}
+          alt="QR Code"
+          style={{ width: "220px", marginBottom: "20px" }}
+        />
+      )}
+
+      <p style={styles.linkBox}>{shareLink}</p>
+
+      <button style={styles.button} onClick={copyLink}>
+        Copy Link
+      </button>
+
+      <h2 style={{ marginTop: "40px" }}>Preview Donation Card</h2>
+
       <div style={styles.card}>
-        {photo && (
-          <img src={photo} alt="User" style={styles.photo} />
+        {data.photo && (
+          <img
+            src={data.photo}
+            alt="Uploaded"
+            style={{ width: "200px", borderRadius: "10px", marginBottom: "15px" }}
+          />
         )}
 
-        {qrImage && (
-          <img src={qrImage} alt="QR Code" style={styles.qr} />
-        )}
-
-        <button style={styles.downloadCard} onClick={downloadCard}>
-          Download Donation Card
-        </button>
-
-        <a href={qrImage} download="donation-qrcode.png" style={styles.download}>
-          Download QR Code Only
-        </a>
-
-        <p style={styles.subtitle}>Or copy your share link:</p>
-
-        <div style={styles.box}>{shareLink}</div>
+        <h3>{data.name}</h3>
+        <p><strong>Need:</strong> {data.need}</p>
+        {data.story && <p style={styles.story}>{data.story}</p>}
 
         <button
           style={styles.button}
-          onClick={() => navigator.clipboard.writeText(shareLink)}
+          onClick={() => window.open(data.link, "_blank")}
         >
-          Copy Link
+          Donate via {data.method}
         </button>
-      </div>
-
-      {/* Hidden card for PNG rendering */}
-      <div style={styles.hidden}>
-        <div ref={cardRef} style={styles.renderCard}>
-          {photo && (
-            <img src={photo} alt="User" style={styles.renderPhoto} />
-          )}
-          {qrImage && (
-            <img src={qrImage} alt="QR Code" style={styles.renderQR} />
-          )}
-          <p style={styles.renderText}>Scan to donate</p>
-        </div>
       </div>
     </div>
   );
 }
 
 const styles = {
-  page: {
-    display: "flex",
-    justifyContent: "center",
-    padding: "40px",
-    fontFamily: "Arial, sans-serif",
-    backgroundColor: "#f5f5f5",
-    minHeight: "100vh",
-  },
-  card: {
-    width: "100%",
-    maxWidth: "420px",
-    backgroundColor: "#fff",
-    padding: "30px",
-    borderRadius: "12px",
-    boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-    textAlign: "center",
-  },
-  photo: {
-    width: "100%",
-    maxWidth: "260px",
-    borderRadius: "12px",
-    marginBottom: "20px",
-  },
-  qr: {
-    width: "260px",
-    height: "260px",
-    marginBottom: "20px",
-  },
-  downloadCard: {
-    display: "inline-block",
-    marginBottom: "20px",
-    padding: "12px 20px",
-    backgroundColor: "#222",
-    color: "#fff",
-    borderRadius: "6px",
-    border: "none",
-    cursor: "pointer",
-    fontSize: "1.1rem",
-  },
-  download: {
-    display: "inline-block",
-    marginBottom: "20px",
-    padding: "10px 20px",
-    backgroundColor: "#444",
-    color: "#fff",
-    borderRadius: "6px",
-    textDecoration: "none",
-  },
-  subtitle: {
-    marginBottom: "10px",
-    fontSize: "1rem",
-  },
-  box: {
+  container: { padding: "40px", fontFamily: "Arial, sans-serif" },
+  title: { fontSize: "2rem", marginBottom: "20px" },
+  linkBox: {
+    padding: "10px",
     backgroundColor: "#eee",
-    padding: "12px",
     borderRadius: "6px",
-    marginBottom: "20px",
     wordBreak: "break-all",
+    marginBottom: "20px",
   },
   button: {
     padding: "12px 24px",
@@ -154,32 +100,19 @@ const styles = {
     backgroundColor: "#333",
     color: "#fff",
     border: "none",
-    borderRadius: "8px",
+    borderRadius: "6px",
+    marginBottom: "20px",
   },
-  hidden: {
-    position: "absolute",
-    left: "-9999px",
-    top: "-9999px",
-  },
-  renderCard: {
-    width: "400px",
+  card: {
+    marginTop: "20px",
     padding: "20px",
     backgroundColor: "#fff",
     borderRadius: "12px",
-    textAlign: "center",
+    boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+    maxWidth: "350px",
   },
-  renderPhoto: {
-    width: "100%",
-    borderRadius: "12px",
+  story: {
     marginBottom: "20px",
-  },
-  renderQR: {
-    width: "240px",
-    height: "240px",
-    marginBottom: "10px",
-  },
-  renderText: {
-    fontSize: "1.2rem",
-    fontWeight: "bold",
+    whiteSpace: "pre-wrap",
   },
 };

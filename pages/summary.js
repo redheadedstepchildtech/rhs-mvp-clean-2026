@@ -1,120 +1,78 @@
 import { useEffect, useState } from "react";
 
 export default function Summary() {
-  const [data, setData] = useState({});
-  const [photo, setPhoto] = useState(null);
+  const [data, setData] = useState(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const obj = {};
-      params.forEach((value, key) => {
-        obj[key] = value;
-      });
-      setData(obj);
+    const params = new URLSearchParams(window.location.search);
 
-      const storedPhoto = sessionStorage.getItem("uploadedPhoto");
-      if (storedPhoto) setPhoto(storedPhoto);
-    }
+    const hasPhoto = params.get("photo") === "yes";
+    const storedPhoto = hasPhoto ? sessionStorage.getItem("uploadedPhoto") : null;
+
+    setData({
+      name: params.get("name") || "",
+      need: params.get("need") || "",
+      method: params.get("method") || "",
+      link: params.get("link") || "",
+      story: params.get("story") || "",
+      photo: storedPhoto,
+    });
   }, []);
 
-  if (!data.name) return <p>Loading...</p>;
+  if (!data) return <p>Loading...</p>;
 
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        {photo && (
-          <img src={photo} alt="User" style={styles.photo} />
-        )}
+    <div style={styles.container}>
+      <h1 style={styles.title}>{data.name}'s Donation Page</h1>
 
-        <h1 style={styles.name}>{data.name}</h1>
-        <p style={styles.need}>I need help with: {data.need}</p>
+      {data.photo && (
+        <img
+          src={data.photo}
+          alt="Uploaded"
+          style={{ width: "250px", borderRadius: "10px", marginBottom: "20px" }}
+        />
+      )}
 
-        {data.story && (
-          <p style={styles.story}>{data.story}</p>
-        )}
+      <p style={styles.need}><strong>Need:</strong> {data.need}</p>
 
-        <button
-          style={styles.button}
-          onClick={() => {
-            if (data.method === "Direct Deposit") {
-              alert("Direct Deposit setup is coming soon.");
-              return;
-            }
-            window.open(data.link, "_blank");
-          }}
-        >
-          Donate via {data.method}
-        </button>
+      {data.story && (
+        <p style={styles.story}><strong>Why I need help:</strong> {data.story}</p>
+      )}
 
-        <button
-          style={styles.secondaryButton}
-          onClick={() => {
-            window.location.href = "/share?" + window.location.search.substring(1);
-          }}
-        >
-          Share This Page
-        </button>
-      </div>
+      <h3>Donation Options</h3>
+      <button
+        style={styles.button}
+        onClick={() => window.open(data.link, "_blank")}
+      >
+        Donate via {data.method}
+      </button>
+
+      <button
+        style={styles.button}
+        onClick={() =>
+          (window.location.href = "/share" + window.location.search)
+        }
+      >
+        Get QR Code & Share Link
+      </button>
     </div>
   );
 }
 
 const styles = {
-  page: {
-    display: "flex",
-    justifyContent: "center",
-    padding: "40px",
-    backgroundColor: "#f5f5f5",
-    minHeight: "100vh",
-    fontFamily: "Arial, sans-serif",
-  },
-  card: {
-    width: "100%",
-    maxWidth: "420px",
-    backgroundColor: "#fff",
-    padding: "30px",
-    borderRadius: "12px",
-    boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-    textAlign: "center",
-  },
-  photo: {
-    width: "100%",
-    maxWidth: "260px",
-    borderRadius: "12px",
-    marginBottom: "20px",
-  },
-  name: {
-    fontSize: "1.8rem",
-    marginBottom: "10px",
-  },
-  need: {
-    fontSize: "1.2rem",
-    marginBottom: "20px",
-  },
-  story: {
-    fontSize: "1rem",
-    marginBottom: "20px",
-    whiteSpace: "pre-wrap",
-  },
+  container: { padding: "40px", fontFamily: "Arial, sans-serif" },
+  title: { fontSize: "2rem", marginBottom: "20px" },
+  need: { fontSize: "1.2rem", marginBottom: "10px" },
+  story: { marginBottom: "20px" },
   button: {
-    width: "100%",
-    padding: "14px",
+    padding: "12px 24px",
     fontSize: "1.1rem",
+    cursor: "pointer",
     backgroundColor: "#333",
     color: "#fff",
     border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-    marginBottom: "15px",
-  },
-  secondaryButton: {
-    width: "100%",
-    padding: "12px",
-    fontSize: "1rem",
-    backgroundColor: "#eee",
-    border: "1px solid #ccc",
     borderRadius: "6px",
-    cursor: "pointer",
+    marginRight: "10px",
+    marginTop: "10px",
   },
 };
